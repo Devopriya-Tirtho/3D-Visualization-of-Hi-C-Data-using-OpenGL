@@ -1,0 +1,39 @@
+#version 330 core
+layout(location = 0) in vec3 vertexPosition_modelspace;
+layout(location = 1) in vec3 instancePosition; // Instance position attribute
+layout(location = 2) in float chromoID; // Chromosome ID attribute
+layout(location = 3) in vec3 vertexNormal; // Vertex normal attribute
+
+out vec3 FragPos; // Position of the fragment in world space
+out vec3 Normal; // Normal of the fragment in world space
+out float ChromoIDFragment; // Chromosome ID passed to fragment shader
+
+uniform mat4 VP; // Combined View and Projection matrices
+uniform float scale; // Uniform scale factor
+
+void main() {
+    ChromoIDFragment = chromoID;
+
+    // Construct the translation matrix
+    mat4 translation = mat4(1.0);
+    translation[3] = vec4(instancePosition, 1.0);
+
+    // Construct the scaling matrix
+    mat4 scaling = mat4(1.0);
+    scaling[0][0] = scale;
+    scaling[1][1] = scale;
+    scaling[2][2] = scale;
+
+    // Combine translation and scaling to form the Model matrix
+    mat4 Model = translation * scaling;
+
+    // Transform the vertex position to world space
+    vec4 worldPosition = Model * vec4(vertexPosition_modelspace, 1.0);
+    FragPos = vec3(worldPosition);
+
+    // Transform the normal to world space
+    Normal = mat3(transpose(inverse(Model))) * vertexNormal;
+
+    // Transform the vertex position to clip space
+    gl_Position = VP * worldPosition;
+}
